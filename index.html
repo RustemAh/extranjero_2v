@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Presidencial 2025 — Voto en el Extranjero</title>
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f8fafc;
+  --card-bg: #ffffff;
+  --border: #d1d5db;
+  --text-main: #111827;
+  --text-muted: #6b7280;
+  --primary: #005CA9;
+  --bar-bg: #e5e7eb;
+}
+
+body.dark {
+  color-scheme: dark;
+  --bg: #020617;
+  --card-bg: #020617;
+  --border: #1e293b;
+  --text-main: #e5e7eb;
+  --text-muted: #9ca3af;
+  --primary: #1d4ed8;
+  --bar-bg: #0f172a;
+}
+
+body {
+  margin:0;
+  font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+  background: var(--bg);
+  color: var(--text-main);
+}
+.wrap { max-width:780px; margin:0 auto; padding:14px; }
+.card { background:var(--card-bg); border:1px solid var(--border); border-radius:10px; overflow:hidden; box-shadow:0 1px 3px rgba(15,23,42,.08); }
+
+/* Header */
+.header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:12px 16px 6px;
+  border-bottom:1px solid var(--border);
+}
+.header-left {
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.header-left img { width:48px; height:auto; }
+.header-left h1 {
+  margin:0;
+  font-size:20px;
+  font-weight:800;
+}
+.ts { font-size:12px; color:var(--text-muted); margin-top:4px; }
+
+/* Controls */
+.controls {
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  align-items:center;
+  padding:10px 16px;
+  border-bottom:1px solid var(--border);
+}
+.control-group { display:flex; align-items:center; gap:6px; font-size:13px; }
+select, input[type="search"] {
+  padding:6px 10px;
+  font-size:14px;
+  border-radius:6px;
+  border:1px solid var(--border);
+  background: var(--card-bg);
+  color: var(--text-main);
+}
+.dark-toggle, .embed-btn, .refresh-btn {
+  padding:6px 10px;
+  border-radius:999px;
+  border:1px solid var(--border);
+  background: var(--card-bg);
+  cursor:pointer;
+  font-size:12px;
+}
+
+/* Banner país */
+.section-title {
+  font-size:13px;
+  font-weight:700;
+  background:var(--primary);
+  color:#fff;
+  padding:8px 16px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.section-title span:last-child { font-size:11px; opacity:.9; }
+
+/* Candidate rows */
+.candidate-row {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  padding:10px 16px;
+  border-bottom:1px solid var(--border);
+  gap:6px;
+}
+.candidate-info { display:flex; align-items:center; gap:8px; }
+.candidate-photo { width:36px; height:36px; border-radius:50%; object-fit:cover; border:1px solid var(--border); }
+.party-badge { padding:2px 6px; border-radius:4px; font-size:11px; font-weight:700; color:#fff; display:inline-block; }
+
+.bar-rail { width:120px; background:var(--bar-bg); height:6px; border-radius:6px; overflow:hidden; }
+.bar-fill { height:6px; border-radius:6px; }
+.bar-rail-thin { height:4px; }
+
+.percent { font-weight:700; font-size:12px; margin-left:6px; }
+.winner-tag { background:#FFD400; font-size:11px; padding:2px 4px; border-radius:4px; font-weight:700; margin-left:6px; }
+.candidate-row.winner { background:rgba(59,130,246,0.05); }
+
+/* Bloque barras 2ª/1ª paralelas (lado derecho) */
+.runoff-bars {
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:3px;
+  margin-top:4px;
+}
+.runoff-bar-row {
+  display:flex;
+  align-items:center;
+  gap:4px;
+}
+.runoff-bar-label {
+  font-size:10px;
+  font-weight:700;
+  color:var(--text-muted);
+  min-width:20px;
+  text-align:right;
+}
+
+/* Texto 1ª vuelta (lado izquierdo) */
+.runoff-text {
+  font-size:11px;
+  color:var(--text-muted);
+  margin-top:3px;
+}
+
+/* Totals & footer */
+.total-box {
+  padding:10px 16px;
+  border-top:1px solid var(--border);
+  background:rgba(148,163,184,0.08);
+  font-size:13px;
+}
+.total-box b { font-weight:700; }
+.footer {
+  padding:8px 16px 10px;
+  font-size:11px;
+  color:var(--text-muted);
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+/* Bloque segunda vuelta */
+.runoff-header {
+  padding:8px 16px 4px;
+  font-size:13px;
+  font-weight:700;
+  background:rgba(148,163,184,0.12);
+  border-bottom:1px solid var(--border);
+}
+.runoff-note {
+  padding:0 16px 6px;
+  font-size:11px;
+  color:var(--text-muted);
+}
+
+/* Separador entre 2ª y 1ª vuelta */
+.round-separator {
+  padding:6px 16px;
+  font-size:12px;
+  font-weight:700;
+  color:var(--text-muted);
+  border-top:1px dashed var(--border);
+  background:rgba(148,163,184,0.04);
+}
+
+/* Modal embed */
+.modal-backdrop {
+  position:fixed;
+  inset:0;
+  background:rgba(15,23,42,.55);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:50;
+}
+.modal {
+  background:var(--card-bg);
+  border-radius:10px;
+  border:1px solid var(--border);
+  max-width:520px;
+  width:90%;
+  padding:14px 16px;
+  box-shadow:0 10px 30px rgba(15,23,42,.4);
+}
+.modal h3 { margin:0 0 8px; font-size:15px; font-weight:700; }
+.modal p { margin:0 0 8px; font-size:12px; color:var(--text-muted); }
+.modal textarea {
+  width:100%;
+  min-height:80px;
+  padding:8px;
+  font-size:12px;
+  border-radius:6px;
+  border:1px solid var(--border);
+  resize:vertical;
+  background:var(--card-bg);
+  color:var(--text-main);
+}
+.modal-actions {
+  margin-top:10px;
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+}
+.btn-sm { padding:6px 10px; font-size:12px; border-radius:999px; border:1px solid var(--border); background:var(--card-bg); cursor:pointer; }
+.btn-primary-sm { border-color:var(--primary); color:#fff; background:var(--primary); }
+
+@media (max-width:600px){
+  .candidate-row { flex-direction:column; align-items:flex-start; }
+  .bar-rail { width:100px; }
+}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+  <div class="card">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-left">
+        <img src="https://www.epicentrochile.com/wp-content/uploads/2017/05/logo-little.png" alt="Epicentro Logo">
+        <h1>Presidencial 2025 — Voto en el Extranjero</h1>
+      </div>
+      <div class="ts" id="ts">Actualizado…</div>
+    </div>
+
+    <!-- Controles (ocultos en modo embed) -->
+    <div class="controls" id="controlsRow">
+      <div class="control-group">
+        <label for="countrySelect">País:</label>
+        <select id="countrySelect"></select>
+      </div>
+      <div class="control-group">
+        <span>Buscar:</span>
+        <input type="search" id="countrySearch" placeholder="Escribe un país…" />
+      </div>
+      <button id="refreshBtn" class="refresh-btn">🔄 Actualizar ahora</button>
+      <button id="embedBtn" class="embed-btn">🔗 Generar embed</button>
+    </div>
+
+    <!-- País seleccionado -->
+    <div id="countryTitle" class="section-title">
+      <span>—</span><span>—</span>
+    </div>
+
+    <!-- Resultados -->
+    <div id="results"></div>
+
+    <!-- Totales -->
+    <div class="total-box" id="totalBox">
+      Total votos país: — · Total exterior global: — 
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <span>Actualiza cada 60s · Fuente: Resultados preliminares (voto en el exterior) - Desarrollado por Epicentro Labs</span>
+      <span id="ts2"></span>
+    </div>
+  </div>
+</div>
+
+<!-- Modal embed -->
+<div class="modal-backdrop" id="embedModal">
+  <div class="modal">
+    <h3>Código embed para este país</h3>
+    <p>Copia y pega este iframe en tu nota o sitio para mostrar solo este país.</p>
+    <textarea id="embedCode" readonly></textarea>
+    <div class="modal-actions">
+      <button class="btn-sm" id="closeEmbed">Cerrar</button>
+      <button class="btn-primary-sm" id="copyEmbed">📋 Copiar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ======================== BANDERAS SVG ========================
+function flagSVG(country) {
+  const ISO2 = {
+    "Nueva Zelanda": "nz","Australia": "au","China": "cn","Corea": "kr",
+    "Vietnam": "vn","Tailandia": "th","Singapur": "sg","Japon": "jp",
+    "Indonesia": "id","Filipinas": "ph","India": "in","Emiratos Arabes": "ae",
+    "Jordania": "jo","Israel": "il","El Libano": "lb","Malasia":"my",
+    "Alemania": "de","Austria":"at","Belgica":"be","Croacia":"hr",
+    "Dinamarca":"dk","España":"es","Federacion Rusa":"ru","Finlandia":"fi",
+    "Francia":"fr","Grecia":"gr","Hungria":"hu","Irlanda":"ie","Italia":"it",
+    "Noruega":"no","Paises Bajos":"nl","Polonia":"pl","Portugal":"pt",
+    "Reino Unido":"gb","Republica Checa":"cz","Rumania":"ro","Suecia":"se",
+    "Suiza":"ch","Turquia":"tr",
+    "Argelia":"dz","Egipto":"eg","Kenia":"ke","Marruecos":"ma","Sudafrica":"za",
+    "Argentina":"ar","Bolivia":"bo","Brasil":"br","Canada":"ca","Colombia":"co",
+    "Cuba":"cu","Ecuador":"ec","El Salvador":"sv","Estados Unidos":"us",
+    "Guatemala":"gt","Haiti":"ht","Honduras":"hn","Jamaica":"jm","Mexico":"mx",
+    "Nicaragua":"ni","Panama":"pa","Paraguay":"py","Peru":"pe",
+    "Republica Dominicana":"do","Uruguay":"uy"
+  };
+  const code = ISO2[country];
+  if (!code) return "";
+  return `<img src="https://flagcdn.com/24x18/${code}.png" style="width:18px;height:auto;border-radius:2px;vertical-align:middle;">`;
+}
+
+// ======================== CONTINENTES ========================
+const CONT = {
+  "Nueva Zelanda":"Oceanía","Australia":"Oceanía",
+  "China":"Asia","Corea":"Asia","Vietnam":"Asia","Tailandia":"Asia",
+  "Singapur":"Asia","Japon":"Asia","Indonesia":"Asia","Filipinas":"Asia",
+  "India":"Asia","Emiratos Arabes":"Asia","Jordania":"Asia","Israel":"Asia",
+  "El Libano":"Asia","Malasia":"Asia", 
+  "Alemania":"Europa","Austria":"Europa","Belgica":"Europa","Croacia":"Europa",
+  "Dinamarca":"Europa","España":"Europa","Federacion Rusa":"Europa",
+  "Finlandia":"Europa","Francia":"Europa","Grecia":"Europa","Hungria":"Europa",
+  "Irlanda":"Europa","Italia":"Europa","Noruega":"Europa","Paises Bajos":"Europa",
+  "Polonia":"Europa","Portugal":"Europa","Reino Unido":"Europa",
+  "Republica Checa":"Europa","Rumania":"Europa","Suecia":"Europa",
+  "Suiza":"Europa","Turquia":"Europa",
+  "Argelia":"África","Egipto":"África","Kenia":"África","Marruecos":"África",
+  "Sudafrica":"África",
+  "Argentina":"América","Bolivia":"América","Brasil":"América","Canada":"América",
+  "Colombia":"América","Cuba":"América","Ecuador":"América","El Salvador":"América",
+  "Estados Unidos":"América","Guatemala":"América","Haiti":"América",
+  "Honduras":"América","Jamaica":"América","Mexico":"América","Nicaragua":"América",
+  "Panama":"América","Paraguay":"América","Peru":"América",
+  "Republica Dominicana":"América","Uruguay":"América"
+};
+
+// PARTIDOS → COLOR
+const PARTY_COLORS = {
+  "PDG": "#9333EA","PC": "#E5252A","IND": "#6b7280",
+  "PNL": "#6b7280","REP": "#1D4ED8","UDI": "#059669","REP-":"#1D4ED8"
+};
+
+// CONFIG
+const SHEET_URL_R1 =
+ "https://docs.google.com/spreadsheets/d/1e1hdX19TAZIiOnTfPgcCmfOh0HujEHWNEYn5WBiAFz8/export?format=csv&gid=327892612";
+const SHEET_URL_R2 =
+ "https://docs.google.com/spreadsheets/d/1e1hdX19TAZIiOnTfPgcCmfOh0HujEHWNEYn5WBiAFz8/export?format=csv&gid=916019350";
+
+const REFRESH_MS = 60000;
+const BASE_EMBED_URL = "https://rustemah.github.io/epicentro-exterior/";
+
+// Datos 1ª vuelta
+let CAND_NAMES = [], CAND_PARTY = [], CAND_PHOTO = [];
+let COUNTRIES = [];   // { name, continent, votes:[...], total }
+let GLOBAL_TOTALS = []; // suma por candidato
+let IDX_J = -1, IDX_K = -1;
+
+// Datos 2ª vuelta (solo Jara vs Kast)
+let RUNOFF_COUNTRIES = []; // { name, j, k, total }
+let RUNOFF_GLOBAL_J = 0, RUNOFF_GLOBAL_K = 0;
+
+function parseIntClean(x){
+  return Number(String(x||"0").replace(/[^\d]/g,"")) || 0;
+}
+
+// limpia celdas que traen <img ...> u otros tags
+function cleanCell(s){
+  return String(s||"").replace(/<img[^>]*>/gi,"").trim();
+}
+
+// ========== PARSE 1ª VUELTA ==========
+function parseSheetR1(text){
+  const lines = text.trim().split(/\r?\n/);
+  if(lines.length < 5) return;
+
+  const row1 = lines[0].split(",").map(s=>cleanCell(s));
+  const row2 = lines[1].split(",").map(s=>cleanCell(s));
+  const row3 = lines[2].split(",").map(s=>s.trim());
+
+  CAND_NAMES = row1.slice(1);
+  CAND_PARTY = row2.slice(1);
+  CAND_PHOTO = row3.slice(1);
+
+  IDX_J = CAND_NAMES.findIndex(n => n.toLowerCase().includes("jara"));
+  IDX_K = CAND_NAMES.findIndex(n => n.toLowerCase().includes("kast"));
+
+  const numCands = CAND_NAMES.length;
+
+  COUNTRIES = [];
+  for(let i=4; i<lines.length; i++){
+    const cols = lines[i].split(",").map(s=>s.trim());
+    const name = cols[0];
+    if(!name) continue;
+    const cont = CONT[name] || "Otro";
+    const rawVotes = cols.slice(1, 1+numCands);
+    const votes = rawVotes.map(parseIntClean);
+    const total = votes.reduce((a,b)=>a+b,0);
+    COUNTRIES.push({name, continent:cont, votes, total});
+  }
+
+  GLOBAL_TOTALS = new Array(numCands).fill(0);
+  COUNTRIES.forEach(c=>{
+    c.votes.forEach((v,i)=>GLOBAL_TOTALS[i]+=v);
+  });
+}
+
+// ========== PARSE 2ª VUELTA (Jara vs Kast) ==========
+function parseSheetR2(text){
+  const lines = text.trim().split(/\r?\n/);
+  if(lines.length < 5) return;
+
+  RUNOFF_COUNTRIES = [];
+  RUNOFF_GLOBAL_J = 0;
+  RUNOFF_GLOBAL_K = 0;
+
+  for(let i=4; i<lines.length; i++){
+    const cols = lines[i].split(",").map(s=>s.trim());
+    const name = cols[0];
+    if(!name) continue;
+
+    const j = parseIntClean(cols[1]);
+    const k = parseIntClean(cols[2]);
+    const total = j + k;
+
+    if(/^total/i.test(name)){
+      RUNOFF_GLOBAL_J = j;
+      RUNOFF_GLOBAL_K = k;
+      continue;
+    }
+
+    RUNOFF_COUNTRIES.push({name, j, k, total});
+  }
+}
+
+// Construir menú
+function buildCountryOptions(filter=""){
+  const sel = document.getElementById("countrySelect");
+  const q = filter.toLowerCase();
+  sel.innerHTML = "";
+
+  const continentsOrder = ["América","Europa","Asia","África","Oceanía","Otro"];
+
+  const optGlobal = document.createElement("option");
+  optGlobal.value = "GLOBAL";
+  optGlobal.textContent = "🌎 Total voto exterior";
+  sel.appendChild(optGlobal);
+
+  continentsOrder.forEach(cont=>{
+    const subset = COUNTRIES.filter(c => c.continent===cont && c.total>0 && (!q || c.name.toLowerCase().includes(q)));
+    if(!subset.length) return;
+    const og = document.createElement("optgroup");
+    og.label = cont;
+    subset.forEach(c=>{
+      const opt = document.createElement("option");
+      opt.value = c.name;
+      opt.innerHTML = `${flagSVG(c.name)}&nbsp;${c.name}`;
+      og.appendChild(opt);
+    });
+    sel.appendChild(og);
+  });
+}
+
+// Render país
+function renderCountry(value){
+  const countryTitle = document.getElementById("countryTitle");
+  const resultsDiv   = document.getElementById("results");
+  const totalBox     = document.getElementById("totalBox");
+  resultsDiv.innerHTML = "";
+
+  let localVotes = [];
+  let localTotal = 0;
+  const globalTotal = GLOBAL_TOTALS.reduce((a,b)=>a+b,0);
+
+  if(value === "GLOBAL"){
+    localVotes = [...GLOBAL_TOTALS];
+    localTotal = globalTotal;
+    countryTitle.innerHTML = `<span>🌎 TOTAL VOTO EXTERIOR</span><span>${globalTotal.toLocaleString("es-CL")}</span>`;
+  } else {
+    const obj = COUNTRIES.find(c => c.name === value);
+    if(!obj){
+      countryTitle.innerHTML = `<span>Sin datos para ${value}</span><span>—</span>`;
+      totalBox.innerHTML = `Total votos en el país seleccionado: <b>0</b> · Total exterior global: <b>${globalTotal.toLocaleString("es-CL")}</b>`;
+      return;
+    }
+    localVotes = obj.votes;
+    localTotal = obj.total;
+    const flag = flagSVG(obj.name);
+    countryTitle.innerHTML = `<span>${flag}&nbsp;${obj.name.toUpperCase()}</span><span>${obj.continent.toUpperCase()}</span>`;
+  }
+
+  // 1ª vuelta Jara/Kast
+  let j1 = 0, k1 = 0, pct1J = 0, pct1K = 0;
+  if(IDX_J >= 0) j1 = localVotes[IDX_J] || 0;
+  if(IDX_K >= 0) k1 = localVotes[IDX_K] || 0;
+  if(localTotal > 0){
+    pct1J = j1/localTotal*100;
+    pct1K = k1/localTotal*100;
+  }
+
+  // 2ª vuelta
+  let j2 = 0, k2 = 0;
+  if(value === "GLOBAL"){
+    j2 = RUNOFF_GLOBAL_J;
+    k2 = RUNOFF_GLOBAL_K;
+  } else {
+    const r = RUNOFF_COUNTRIES.find(c=>c.name===value);
+    if(r){
+      j2 = r.j;
+      k2 = r.k;
+    }
+  }
+  const total2 = j2 + k2;
+
+  if(total2 > 0){
+    const pctJ2 = (j2/total2*100) || 0;
+    const pctK2 = (k2/total2*100) || 0;
+    const max2 = Math.max(j2,k2);
+
+    const rh = document.createElement("div");
+    rh.className = "runoff-header";
+    rh.textContent = "Segunda vuelta — Jeannette Jara vs José Antonio Kast";
+    resultsDiv.appendChild(rh);
+
+    const rn = document.createElement("div");
+    rn.className = "runoff-note";
+    rn.textContent = `Total votos 2ª vuelta en este ámbito: ${total2.toLocaleString("es-CL")}`;
+    resultsDiv.appendChild(rn);
+
+    // Jara
+    const rowJ = document.createElement("div");
+    rowJ.className = "candidate-row" + (j2===max2 && j2>0 ? " winner" : "");
+    const colorJ = PARTY_COLORS["PC"] || "#E5252A";
+    rowJ.innerHTML = `
+      <div>
+        <div class="candidate-info">
+          <img src="https://www.epicentrochile.com/wp-content/uploads/2025/11/jara.jpg" class="candidate-photo" alt="Jeannette Jara">
+          <div>
+            <div style="font-weight:700;">Jeannette Jara${j2===max2 && j2>0?`<span class="winner-tag">✓ Gana aquí (2ª vuelta)</span>`:""}</div>
+            <span class="party-badge" style="background:${colorJ};">PC</span>
+          </div>
+        </div>
+        <div class="runoff-text">
+          1ª vuelta en este ámbito: ${j1.toLocaleString("es-CL")} votos (${(pct1J||0).toFixed(1)}%)
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <div>${j2.toLocaleString("es-CL")}</div>
+        <div class="runoff-bars">
+          <div class="runoff-bar-row">
+            <span class="runoff-bar-label">2ª</span>
+            <div class="bar-rail"><div class="bar-fill" style="width:${pctJ2.toFixed(1)}%;background:${colorJ};"></div></div>
+            <span class="percent">${pctJ2.toFixed(1)}%</span>
+          </div>
+          <div class="runoff-bar-row">
+            <span class="runoff-bar-label">1ª</span>
+            <div class="bar-rail bar-rail-thin"><div class="bar-fill" style="width:${(pct1J||0).toFixed(1)}%;background:${colorJ};opacity:.6;"></div></div>
+            <span class="percent">${(pct1J||0).toFixed(1)}%</span>
+          </div>
+        </div>
+      </div>
+    `;
+    resultsDiv.appendChild(rowJ);
+
+    // Kast
+    const rowK = document.createElement("div");
+    rowK.className = "candidate-row" + (k2===max2 && k2>0 ? " winner" : "");
+    const colorK = PARTY_COLORS["REP-"] || "#1D4ED8";
+    rowK.innerHTML = `
+      <div>
+        <div class="candidate-info">
+          <img src="https://www.epicentrochile.com/wp-content/uploads/2025/11/Kast.jpg" class="candidate-photo" alt="José Antonio Kast">
+          <div>
+            <div style="font-weight:700;">José Antonio Kast${k2===max2 && k2>0?`<span class="winner-tag">✓ Gana aquí (2ª vuelta)</span>`:""}</div>
+            <span class="party-badge" style="background:${colorK};">REP-</span>
+          </div>
+        </div>
+        <div class="runoff-text">
+          1ª vuelta en este ámbito: ${k1.toLocaleString("es-CL")} votos (${(pct1K||0).toFixed(1)}%)
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <div>${k2.toLocaleString("es-CL")}</div>
+        <div class="runoff-bars">
+          <div class="runoff-bar-row">
+            <span class="runoff-bar-label">2ª</span>
+            <div class="bar-rail"><div class="bar-fill" style="width:${pctK2.toFixed(1)}%;background:${colorK};"></div></div>
+            <span class="percent">${pctK2.toFixed(1)}%</span>
+          </div>
+          <div class="runoff-bar-row">
+            <span class="runoff-bar-label">1ª</span>
+            <div class="bar-rail bar-rail-thin"><div class="bar-fill" style="width:${(pct1K||0).toFixed(1)}%;background:${colorK};opacity:.6;"></div></div>
+            <span class="percent">${(pct1K||0).toFixed(1)}%</span>
+          </div>
+        </div>
+      </div>
+    `;
+    resultsDiv.appendChild(rowK);
+
+    const sep = document.createElement("div");
+    sep.className = "round-separator";
+    sep.textContent = "Primera vuelta — todos los candidatos";
+    resultsDiv.appendChild(sep);
+  }
+
+  // Lista 1ª vuelta
+  const list = CAND_NAMES.map((name,i)=>({
+    name,
+    party: CAND_PARTY[i],
+    photo: CAND_PHOTO[i],
+    votes: localVotes[i] || 0
+  }));
+
+  list.sort((a,b)=>b.votes-a.votes);
+  const maxVotes = list.length ? list[0].votes : 0;
+
+  list.forEach(c=>{
+    const color = PARTY_COLORS[c.party] || "#6b7280";
+    const pctRaw = localTotal>0 ? (c.votes/localTotal*100) : 0;
+    const pct    = isNaN(pctRaw) ? 0 : pctRaw;
+    const isW   = c.votes === maxVotes && c.votes>0;
+
+    const row = document.createElement("div");
+    row.className = "candidate-row" + (isW?" winner":"");
+    row.innerHTML = `
+      <div class="candidate-info">
+        <img src="${c.photo}" class="candidate-photo" alt="${c.name}">
+        <div>
+          <div style="font-weight:700;">${c.name}${isW?`<span class="winner-tag">✓ Gana aquí (1ª vuelta)</span>`:""}</div>
+          <span class="party-badge" style="background:${color};">${c.party}</span>
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <div>${c.votes.toLocaleString("es-CL")}</div>
+        <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-top:4px;">
+          <div class="bar-rail"><div class="bar-fill" style="width:${pct.toFixed(1)}%;background:${color};"></div></div>
+          <span class="percent">${pct.toFixed(1)}%</span>
+        </div>
+      </div>
+    `;
+    resultsDiv.appendChild(row);
+  });
+
+  // Totales:
+  if(value==="GLOBAL"){
+    const total2Global = RUNOFF_GLOBAL_J + RUNOFF_GLOBAL_K;
+    // mismo formato que los países, pero una línea por vuelta
+    totalBox.innerHTML = `
+      <div>Total votos en el ámbito seleccionado (1ª vuelta): <b>${globalTotal.toLocaleString("es-CL")}</b> · Total exterior global (1ª vuelta): <b>${globalTotal.toLocaleString("es-CL")}</b></div>
+      <div>Total votos en el ámbito seleccionado (2ª vuelta): <b>${total2Global.toLocaleString("es-CL")}</b> · Total exterior global (2ª vuelta): <b>${total2Global.toLocaleString("es-CL")}</b></div>
+    `;
+  } else {
+    totalBox.innerHTML =
+      `Total votos en el país seleccionado (1ª vuelta): <b>${localTotal.toLocaleString("es-CL")}</b> · Total exterior global (1ª vuelta): <b>${globalTotal.toLocaleString("es-CL")}</b>`;
+  }
+}
+
+// Carga principal
+async function load(){
+  try{
+    const res1 = await fetch(SHEET_URL_R1 + "&t=" + Date.now(), {cache:"no-store"});
+    const text1 = await res1.text();
+    parseSheetR1(text1);
+
+    const res2 = await fetch(SHEET_URL_R2 + "&t=" + Date.now(), {cache:"no-store"});
+    const text2 = await res2.text();
+    parseSheetR2(text2);
+
+    const params = new URLSearchParams(window.location.search);
+    const embedPais = params.get("pais");
+
+    buildCountryOptions("");
+
+    if(embedPais){
+      document.getElementById("controlsRow").style.display = "none";
+      renderCountry(embedPais);
+    } else {
+      document.getElementById("countrySelect").value = "GLOBAL";
+      renderCountry("GLOBAL");
+    }
+
+    const stamp = new Date().toLocaleString("es-CL",{dateStyle:"medium",timeStyle:"short"});
+    document.getElementById("ts").textContent  = "Actualizado: " + stamp;
+    document.getElementById("ts2").textContent = stamp;
+  }catch(e){
+    console.error(e);
+  }
+}
+
+// Eventos UI
+document.getElementById("countrySelect").addEventListener("change", e=>{
+  renderCountry(e.target.value);
+});
+
+document.getElementById("countrySearch").addEventListener("input", e=>{
+  const q = e.target.value;
+  const current = document.getElementById("countrySelect").value;
+  buildCountryOptions(q);
+  const sel = document.getElementById("countrySelect");
+  const opt = Array.from(sel.options).find(o=>o.value===current);
+  sel.value = opt ? current : "GLOBAL";
+  renderCountry(sel.value);
+});
+
+document.getElementById("refreshBtn").addEventListener("click", ()=>{
+  const btn = document.getElementById("refreshBtn");
+  btn.textContent = "⏳ Actualizando…";
+  load().then(()=> btn.textContent = "🔄 Actualizar ahora");
+});
+
+// Modal embed
+const embedBtn   = document.getElementById("embedBtn");
+const embedModal = document.getElementById("embedModal");
+const closeEmbed = document.getElementById("closeEmbed");
+const copyEmbed  = document.getElementById("copyEmbed");
+const embedCode  = document.getElementById("embedCode");
+
+embedBtn.addEventListener("click", ()=>{
+  const sel = document.getElementById("countrySelect");
+  const val = sel.value;
+  if(val === "GLOBAL"){
+    alert("Selecciona primero un país para generar su embed.");
+    return;
+  }
+  const url = "https://rustemah.github.io/epicentro-exterior/?pais=" + encodeURIComponent(val);
+  const code = `<iframe src="${url}" width="100%" height="420" frameborder="0" loading="lazy"></iframe>`;
+  embedCode.value = code;
+  embedModal.style.display = "flex";
+});
+
+closeEmbed.addEventListener("click", ()=>{
+  embedModal.style.display = "none";
+});
+
+copyEmbed.addEventListener("click", async ()=>{
+  try{
+    await navigator.clipboard.writeText(embedCode.value);
+    copyEmbed.textContent = "✅ Copiado";
+    setTimeout(()=>copyEmbed.textContent="📋 Copiar",1500);
+  }catch(e){
+    copyEmbed.textContent="Error";
+  }
+});
+
+embedModal.addEventListener("click", (e)=>{
+  if(e.target === embedModal) embedModal.style.display = "none";
+});
+
+// Arranque + auto refresh
+load();
+setInterval(load, REFRESH_MS);
+</script>
+</body>
+</html>

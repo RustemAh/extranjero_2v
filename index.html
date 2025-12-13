@@ -272,7 +272,7 @@ select, input[type="search"] {
 
     <!-- Totales -->
     <div class="total-box" id="totalBox">
-      Total votos país: — · Total exterior global: — 
+      Total votos país: — · Total exterior global: —
     </div>
 
     <!-- Footer -->
@@ -328,7 +328,7 @@ const CONT = {
   "China":"Asia","Corea":"Asia","Vietnam":"Asia","Tailandia":"Asia",
   "Singapur":"Asia","Japon":"Asia","Indonesia":"Asia","Filipinas":"Asia",
   "India":"Asia","Emiratos Arabes":"Asia","Jordania":"Asia","Israel":"Asia",
-  "El Libano":"Asia","Malasia":"Asia", 
+  "El Libano":"Asia","Malasia":"Asia",
   "Alemania":"Europa","Austria":"Europa","Belgica":"Europa","Croacia":"Europa",
   "Dinamarca":"Europa","España":"Europa","Federacion Rusa":"Europa",
   "Finlandia":"Europa","Francia":"Europa","Grecia":"Europa","Hungria":"Europa",
@@ -363,8 +363,8 @@ const BASE_EMBED_URL = "https://rustemah.github.io/epicentro-exterior/";
 
 // Datos 1ª vuelta
 let CAND_NAMES = [], CAND_PARTY = [], CAND_PHOTO = [];
-let COUNTRIES = [];   // { name, continent, votes:[...], total }
-let GLOBAL_TOTALS = []; // suma por candidato
+let COUNTRIES = [];       // { name, continent, votes:[...], total }
+let GLOBAL_TOTALS = [];   // suma por candidato
 let IDX_J = -1, IDX_K = -1;
 
 // Datos 2ª vuelta (solo Jara vs Kast)
@@ -380,29 +380,45 @@ function cleanCell(s){
   return String(s||"").replace(/<img[^>]*>/gi,"").trim();
 }
 
+// CSV más robusto que split(",")
+function parseCSVLine(line){
+  const out = [];
+  let cur = "", inQ = false;
+  for(let i=0;i<line.length;i++){
+    const ch = line[i];
+    if(ch === '"' && line[i+1] === '"'){ cur += '"'; i++; continue; }
+    if(ch === '"'){ inQ = !inQ; continue; }
+    if(ch === ',' && !inQ){ out.push(cur); cur = ""; continue; }
+    cur += ch;
+  }
+  out.push(cur);
+  return out;
+}
+
 // ========== PARSE 1ª VUELTA ==========
 function parseSheetR1(text){
   const lines = text.trim().split(/\r?\n/);
   if(lines.length < 5) return;
 
-  const row1 = lines[0].split(",").map(s=>cleanCell(s));
-  const row2 = lines[1].split(",").map(s=>cleanCell(s));
-  const row3 = lines[2].split(",").map(s=>s.trim());
+  const row1 = parseCSVLine(lines[0]).map(s=>cleanCell(s));
+  const row2 = parseCSVLine(lines[1]).map(s=>cleanCell(s));
+  const row3 = parseCSVLine(lines[2]).map(s=>String(s||"").trim());
 
   CAND_NAMES = row1.slice(1);
   CAND_PARTY = row2.slice(1);
   CAND_PHOTO = row3.slice(1);
 
-  IDX_J = CAND_NAMES.findIndex(n => n.toLowerCase().includes("jara"));
-  IDX_K = CAND_NAMES.findIndex(n => n.toLowerCase().includes("kast"));
+  IDX_J = CAND_NAMES.findIndex(n => String(n).toLowerCase().includes("jara"));
+  IDX_K = CAND_NAMES.findIndex(n => String(n).toLowerCase().includes("kast"));
 
   const numCands = CAND_NAMES.length;
 
   COUNTRIES = [];
   for(let i=4; i<lines.length; i++){
-    const cols = lines[i].split(",").map(s=>s.trim());
-    const name = cols[0];
+    const cols = parseCSVLine(lines[i]).map(s=>String(s||"").trim());
+    const name = cleanCell(cols[0] || "");
     if(!name) continue;
+
     const cont = CONT[name] || "Otro";
     const rawVotes = cols.slice(1, 1+numCands);
     const votes = rawVotes.map(parseIntClean);
@@ -417,6 +433,7 @@ function parseSheetR1(text){
 }
 
 // ========== PARSE 2ª VUELTA (Jara vs Kast) ==========
+// FIX: GLOBAL se obtiene por suma (fallback) si la fila Total viene rara/no detectable
 function parseSheetR2(text){
   const lines = text.trim().split(/\r?\n/);
   if(lines.length < 5) return;
@@ -425,29 +442,49 @@ function parseSheetR2(text){
   RUNOFF_GLOBAL_J = 0;
   RUNOFF_GLOBAL_K = 0;
 
+  let sumJ = 0, sumK = 0;
+
   for(let i=4; i<lines.length; i++){
-    const cols = lines[i].split(",").map(s=>s.trim());
-    const name = cols[0];
+    const cols = parseCSVLine(lines[i]).map(s=>String(s||"").trim());
+
+    const nameRaw = cleanCell(cols[0] || "");
+    const name = nameRaw.replace(/^[^\p{L}]*/u, "").trim(); // quita emoji/símbolos al inicio
     if(!name) continue;
 
     const j = parseIntClean(cols[1]);
     const k = parseIntClean(cols[2]);
-    const total = j + k;
 
-    if(/^total/i.test(name)){
+    const low = name.toLowerCase();
+    const isTotal =
+      /^total\b/i.test(name) ||
+      low.includes("total voto exterior") ||
+      low.includes("total exterior") ||
+      low.includes("global");
+
+    if(isTotal){
       RUNOFF_GLOBAL_J = j;
       RUNOFF_GLOBAL_K = k;
       continue;
     }
 
+    const total = j + k;
     RUNOFF_COUNTRIES.push({name, j, k, total});
+    sumJ += j; sumK += k;
+  }
+
+  // Fallback: si no se detectó (o venía 0), usa la suma real por países
+  if((RUNOFF_GLOBAL_J + RUNOFF_GLOBAL_K) === 0 && (sumJ + sumK) > 0){
+    RUNOFF_GLOBAL_J = sumJ;
+    RUNOFF_GLOBAL_K = sumK;
   }
 }
 
 // Construir menú
 function buildCountryOptions(filter=""){
   const sel = document.getElementById("countrySelect");
-  const q = filter.toLowerCase();
+  const q = (filter || "").toLowerCase();
+  const prev = sel.value;
+
   sel.innerHTML = "";
 
   const continentsOrder = ["América","Europa","Asia","África","Oceanía","Otro"];
@@ -460,16 +497,25 @@ function buildCountryOptions(filter=""){
   continentsOrder.forEach(cont=>{
     const subset = COUNTRIES.filter(c => c.continent===cont && c.total>0 && (!q || c.name.toLowerCase().includes(q)));
     if(!subset.length) return;
+
     const og = document.createElement("optgroup");
     og.label = cont;
+
     subset.forEach(c=>{
       const opt = document.createElement("option");
       opt.value = c.name;
-      opt.innerHTML = `${flagSVG(c.name)}&nbsp;${c.name}`;
+      // Nota: HTML dentro de <option> no se renderiza en select nativo en muchos navegadores
+      opt.textContent = c.name;
       og.appendChild(opt);
     });
+
     sel.appendChild(og);
   });
+
+  // Restaurar selección si aún existe
+  if(prev && Array.from(sel.options).some(o => o.value === prev)){
+    sel.value = prev;
+  }
 }
 
 // Render país
@@ -652,10 +698,9 @@ function renderCountry(value){
     resultsDiv.appendChild(row);
   });
 
-  // Totales:
+  // Totales
   if(value==="GLOBAL"){
     const total2Global = RUNOFF_GLOBAL_J + RUNOFF_GLOBAL_K;
-    // mismo formato que los países, pero una línea por vuelta
     totalBox.innerHTML = `
       <div>Total votos en el ámbito seleccionado (1ª vuelta): <b>${globalTotal.toLocaleString("es-CL")}</b> · Total exterior global (1ª vuelta): <b>${globalTotal.toLocaleString("es-CL")}</b></div>
       <div>Total votos en el ámbito seleccionado (2ª vuelta): <b>${total2Global.toLocaleString("es-CL")}</b> · Total exterior global (2ª vuelta): <b>${total2Global.toLocaleString("es-CL")}</b></div>
@@ -667,8 +712,16 @@ function renderCountry(value){
 }
 
 // Carga principal
+let LOADING = false;
 async function load(){
+  if(LOADING) return;
+  LOADING = true;
+
   try{
+    // guardar selección actual para no resetear en refresh
+    const selEl = document.getElementById("countrySelect");
+    const prevSelected = selEl.value || "GLOBAL";
+
     const res1 = await fetch(SHEET_URL_R1 + "&t=" + Date.now(), {cache:"no-store"});
     const text1 = await res1.text();
     parseSheetR1(text1);
@@ -680,21 +733,31 @@ async function load(){
     const params = new URLSearchParams(window.location.search);
     const embedPais = params.get("pais");
 
-    buildCountryOptions("");
+    const searchQ = document.getElementById("countrySearch").value || "";
+    buildCountryOptions(searchQ);
 
     if(embedPais){
       document.getElementById("controlsRow").style.display = "none";
+      // en embed mostramos el país exacto del parámetro
       renderCountry(embedPais);
     } else {
-      document.getElementById("countrySelect").value = "GLOBAL";
-      renderCountry("GLOBAL");
+      // restaurar selección previa si existe; si no, GLOBAL
+      if(Array.from(selEl.options).some(o => o.value === prevSelected)){
+        selEl.value = prevSelected;
+      } else {
+        selEl.value = "GLOBAL";
+      }
+      renderCountry(selEl.value);
     }
 
     const stamp = new Date().toLocaleString("es-CL",{dateStyle:"medium",timeStyle:"short"});
     document.getElementById("ts").textContent  = "Actualizado: " + stamp;
     document.getElementById("ts2").textContent = stamp;
+
   }catch(e){
     console.error(e);
+  } finally {
+    LOADING = false;
   }
 }
 
@@ -705,12 +768,9 @@ document.getElementById("countrySelect").addEventListener("change", e=>{
 
 document.getElementById("countrySearch").addEventListener("input", e=>{
   const q = e.target.value;
-  const current = document.getElementById("countrySelect").value;
   buildCountryOptions(q);
   const sel = document.getElementById("countrySelect");
-  const opt = Array.from(sel.options).find(o=>o.value===current);
-  sel.value = opt ? current : "GLOBAL";
-  renderCountry(sel.value);
+  renderCountry(sel.value || "GLOBAL");
 });
 
 document.getElementById("refreshBtn").addEventListener("click", ()=>{
@@ -733,7 +793,7 @@ embedBtn.addEventListener("click", ()=>{
     alert("Selecciona primero un país para generar su embed.");
     return;
   }
-  const url = "https://rustemah.github.io/epicentro-exterior/?pais=" + encodeURIComponent(val);
+  const url = BASE_EMBED_URL + "?pais=" + encodeURIComponent(val);
   const code = `<iframe src="${url}" width="100%" height="420" frameborder="0" loading="lazy"></iframe>`;
   embedCode.value = code;
   embedModal.style.display = "flex";
@@ -763,3 +823,4 @@ setInterval(load, REFRESH_MS);
 </script>
 </body>
 </html>
+

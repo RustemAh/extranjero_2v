@@ -598,7 +598,7 @@ function renderCountry(value){
           </div>
         </div>
         <div class="runoff-text">
-          1ª vuelta en este ámbito: ${j1.toLocaleString("es-CL")} votos (${(pct1J||0).toFixed(1)}%)
+          1ª vuelta: ${j1.toLocaleString("es-CL")} votos (${(pct1J||0).toFixed(1)}%)
         </div>
       </div>
       <div style="text-align:right;">
@@ -633,7 +633,7 @@ function renderCountry(value){
           </div>
         </div>
         <div class="runoff-text">
-          1ª vuelta en este ámbito: ${k1.toLocaleString("es-CL")} votos (${(pct1K||0).toFixed(1)}%)
+          1ª vuelta: ${k1.toLocaleString("es-CL")} votos (${(pct1K||0).toFixed(1)}%)
         </div>
       </div>
       <div style="text-align:right;">
@@ -702,8 +702,8 @@ function renderCountry(value){
   if(value==="GLOBAL"){
     const total2Global = RUNOFF_GLOBAL_J + RUNOFF_GLOBAL_K;
     totalBox.innerHTML = `
-      <div>Total votos en el ámbito seleccionado (1ª vuelta): <b>${globalTotal.toLocaleString("es-CL")}</b> · Total exterior global (1ª vuelta): <b>${globalTotal.toLocaleString("es-CL")}</b></div>
-      <div>Total votos en el ámbito seleccionado (2ª vuelta): <b>${total2Global.toLocaleString("es-CL")}</b> · Total exterior global (2ª vuelta): <b>${total2Global.toLocaleString("es-CL")}</b></div>
+      <div>Total votos (1ª vuelta): <b>${globalTotal.toLocaleString("es-CL")}</b> · Total exterior global (1ª vuelta): <b>${globalTotal.toLocaleString("es-CL")}</b></div>
+      <div>Total votos (2ª vuelta): <b>${total2Global.toLocaleString("es-CL")}</b> · Total exterior global (2ª vuelta): <b>${total2Global.toLocaleString("es-CL")}</b></div>
     `;
   } else {
     totalBox.innerHTML =
